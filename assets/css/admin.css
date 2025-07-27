@@ -1,0 +1,572 @@
+/* UK Category Color Admin Styles - Modern Design */
+
+.wrap {
+    max-width: 1200px;
+    margin: 0;
+}
+
+.wrap h1 {
+    color: #1e1e1e;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* タクソノミーセクション */
+.uk-taxonomy-section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.uk-taxonomy-section:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.uk-taxonomy-section h2 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    margin: 0;
+    padding: 20px 25px;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+/* ターム グリッド */
+.uk-terms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    padding: 25px;
+}
+
+/* ターム アイテム */
+.uk-term-item {
+    background: #fafafa;
+    border: 2px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.uk-term-item:hover {
+    border-color: #0073aa;
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 115, 170, 0.15);
+}
+
+/* ターム情報 */
+.uk-term-info {
+    margin-bottom: 15px;
+}
+
+.uk-term-info strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e1e1e;
+    margin-bottom: 5px;
+}
+
+.uk-term-meta {
+    font-size: 12px;
+    color: #666;
+    background: #e8e8e8;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* カラーコントロール */
+.uk-color-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.uk-color-controls input[type="text"] {
+    width: 80px !important;
+    display: block;
+}
+
+.uk-color-picker {
+    width: 60px !important;
+    height: 40px !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.uk-color-picker:hover {
+    border-color: #0073aa !important;
+    transform: scale(1.05);
+}
+
+/* カラープレビュー */
+.color-preview {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.color-preview:hover {
+    transform: scale(1.1);
+    border-color: #0073aa;
+}
+
+.color-preview .no-color {
+    font-size: 10px;
+    color: #666;
+    font-weight: 600;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* リンク設定 */
+.uk-link-setting {
+    display: flex;
+    align-items: center;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.uk-link-setting:hover {
+    background: #e8e8e8;
+}
+
+.uk-link-setting label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #333;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.uk-link-setting input[type="checkbox"] {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    accent-color: #0073aa;
+    cursor: pointer;
+}
+
+/* リセットボタン */
+.uk-reset-color {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
+    border: none !important;
+    color: #fff !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.uk-reset-color:hover {
+    background: linear-gradient(135deg, #ff5252, #d32f2f) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3) !important;
+}
+
+/* フォームアクション */
+.uk-form-actions {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.uk-form-actions .button-primary {
+    background: linear-gradient(135deg, #0073aa, #005177) !important;
+    border: none !important;
+    padding: 5px 20px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 115, 170, 0.3);
+}
+
+.uk-form-actions .button-primary:hover {
+    background: linear-gradient(135deg, #005177, #003d5c) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 115, 170, 0.4) !important;
+}
+
+/* 通知メッセージ */
+#uk-color-message {
+    border-radius: 8px;
+    border-left: 4px solid #46b450;
+    padding: 15px 20px;
+    background: #d7eddb;
+    color: #155724;
+    font-weight: 500;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: slideInDown 0.5s ease;
+}
+
+#uk-color-message.notice-error {
+    border-left-color: #dc3232;
+    background: #ffeaea;
+    color: #721c24;
+}
+
+#uk-color-message.notice-success {
+    border-left-color: #46b450;
+    background: #d7eddb;
+    color: #155724;
+}
+
+#uk-color-message.notice-info {
+    border-left-color: #0073aa;
+    background: #d7eddb;
+    color: #155724;
+}
+
+/* 保存中の状態表示 */
+.saving-state {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    background: #0073aa;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 115, 170, 0.3);
+    animation: slideInRight 0.3s ease;
+}
+
+.saving-state.success {
+    background: #46b450;
+}
+
+.saving-state.error {
+    background: #dc3232;
+}
+
+.saving-state .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* ボタンの状態表示 */
+.uk-form-actions .button-primary.saving {
+    background: linear-gradient(135deg, #0073aa, #005177) !important;
+    position: relative;
+    pointer-events: none;
+}
+
+.uk-form-actions .button-primary.saving::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.uk-form-actions .button-primary.success {
+    background: linear-gradient(135deg, #46b450, #2e7d32) !important;
+}
+
+.uk-form-actions .button-primary.success::after {
+    content: '✓';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* アニメーション */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 4px 12px rgba(0, 115, 170, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(0, 115, 170, 0.6);
+    }
+
+    100% {
+        box-shadow: 0 4px 12px rgba(0, 115, 170, 0.3);
+    }
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 1200px) {
+    .uk-terms-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .uk-terms-grid {
+        grid-template-columns: 1fr;
+        padding: 15px;
+    }
+
+    .uk-term-item {
+        padding: 15px;
+    }
+
+    .uk-color-controls {
+        gap: 10px;
+    }
+
+    .uk-taxonomy-section h2 {
+        padding: 15px 20px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .uk-color-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .uk-link-setting {
+        justify-content: center;
+    }
+
+    .uk-form-actions .button-primary {
+        width: 100%;
+        padding: 12px 20px !important;
+    }
+}
+
+/* アニメーション */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.uk-term-item {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.uk-term-item:nth-child(odd) {
+    animation-delay: 0.1s;
+}
+
+.uk-term-item:nth-child(even) {
+    animation-delay: 0.2s;
+}
+
+/* ローディング状態 */
+.loading .uk-term-item {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading .uk-term-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* アクセシビリティ改善 */
+.uk-color-picker:focus,
+.uk-reset-color:focus,
+.uk-link-setting input:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* ダークモード対応（将来的な拡張用） */
+@media (prefers-color-scheme: dark) {
+    .uk-term-item {
+        background: #2c2c2c;
+        border-color: #444;
+        color: #fff;
+    }
+
+    .uk-term-info strong {
+        color: #fff;
+    }
+
+    .uk-term-meta {
+        background: #444;
+        color: #ccc;
+    }
+}
+
+/* 保存状態通知スタイル */
+.uk-saving-notification {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.uk-saving-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.uk-saving-notification.saving {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-color: #5a67d8;
+}
+
+.uk-saving-notification.success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: #fff;
+    border-color: #38a169;
+}
+
+.uk-saving-notification.error {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: #fff;
+    border-color: #e53e3e;
+}
+
+.uk-saving-notification .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.uk-saving-notification .checkmark,
+.uk-saving-notification .error-mark {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,228 @@
+/* UK Category Color Frontend Styles */
+
+/* カテゴリー一覧の基本スタイル */
+.uk-category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.uk-term-item {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: #f8f9fa;
+    /* デフォルトの薄いグレー背景 */
+}
+
+.uk-term-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    color: #333;
+}
+
+.uk-term-item .count {
+    opacity: 0.7;
+    font-size: 0.9em;
+    margin-left: 4px;
+}
+
+/* タクソノミー一覧 */
+.uk-taxonomy-list {
+    margin: 20px 0;
+}
+
+.uk-taxonomy-list .taxonomy-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 20px 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e0e0e0;
+    color: #333;
+}
+
+.uk-taxonomy-list .taxonomy-title:first-child {
+    margin-top: 0;
+}
+
+/* 色付きタームリンク（ヘルパー関数用） */
+.uk-colored-term {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 15px;
+    text-decoration: none;
+    color: #333;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0 3px 3px 0;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #f8f9fa;
+    /* デフォルトの薄いグレー背景 */
+}
+
+.uk-colored-term:hover {
+    transform: scale(1.05);
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* 投稿内でのカテゴリー表示 */
+.post-categories .uk-colored-term,
+.post-tags .uk-colored-term {
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+
+/* ウィジェット内での表示 */
+.widget .uk-category-list {
+    margin: 10px 0;
+}
+
+.widget .uk-term-item {
+    font-size: 13px;
+    padding: 4px 8px;
+    margin: 0 4px 4px 0;
+}
+
+/* アーカイブページでの表示 */
+.archive-title .uk-colored-term {
+    font-size: 16px;
+    padding: 8px 16px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .uk-category-list {
+        gap: 6px;
+    }
+
+    .uk-term-item {
+        font-size: 13px;
+        padding: 5px 10px;
+    }
+
+    .uk-taxonomy-list .taxonomy-title {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .uk-category-list {
+        gap: 4px;
+    }
+
+    .uk-term-item {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .uk-term-item .count {
+        font-size: 0.8em;
+    }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+
+    .uk-term-item,
+    .uk-colored-term {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .uk-term-item:hover,
+    .uk-colored-term:hover {
+        color: #fff;
+    }
+
+    .uk-taxonomy-list .taxonomy-title {
+        color: #fff;
+        border-bottom-color: #444;
+    }
+}
+
+/* アクセシビリティ向上 */
+.uk-term-item:focus,
+.uk-colored-term:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* 印刷時のスタイル */
+@media print {
+
+    .uk-term-item,
+    .uk-colored-term {
+        background: transparent !important;
+        border: 1px solid #333 !important;
+        color: #333 !important;
+        box-shadow: none !important;
+    }
+}
+
+/* カスタムレイアウト用のクラス */
+.uk-category-list.grid-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.uk-category-list.grid-layout .uk-term-item {
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.uk-category-list.minimal {
+    gap: 2px;
+}
+
+.uk-category-list.minimal .uk-term-item {
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 3px;
+    border: none;
+    box-shadow: none;
+}
+
+.uk-category-list.large .uk-term-item {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 25px;
+}
+
+/* ホバーエフェクトのバリエーション */
+.uk-term-item.bounce:hover {
+    animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+
+    0%,
+    20%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+
+    40% {
+        transform: translateY(-5px);
+    }
+
+    80% {
+        transform: translateY(-2px);
+    }
+}
