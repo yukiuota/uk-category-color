@@ -168,7 +168,7 @@ if ($terms && !is_wp_error($terms)) {
 
 ## ライセンス
 
-GPL v2 or later
+GPL v2
 
 ## サポート
 
