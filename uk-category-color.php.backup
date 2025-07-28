@@ -2,7 +2,7 @@
 /**
  * Plugin Name: UK Category Color
  * Description: カテゴリーとタクソノミーのタームに個別の背景色を設定できるプラグインです。
- * Version: 1.1.0
+ * Version: 1.0.0
  * Author: Y.U.
  * License: GPL v2
  * Text Domain: uk-category-color
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // プラグインの定数定義
-define('UK_CATEGORY_COLOR_VERSION', '1.1.0');
+define('UK_CATEGORY_COLOR_VERSION', '1.0.0');
 define('UK_CATEGORY_COLOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('UK_CATEGORY_COLOR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -22,6 +22,193 @@ define('UK_CATEGORY_COLOR_PLUGIN_PATH', plugin_dir_path(__FILE__));
  * 色付きタームリンクを生成する関数
  */
 function uk_get_colored_term_link($term_id, $text = null, $force_link = null) {
+        add_action('category_add_form_fields', array($this, 'add_color_field'));
+        add_action('category_edit_form_fields', array($this, 'edit_color_field'));
+        add_action('post_tag_add_form_fields', array($this, 'add_color_field'));
+        add_action('post_tag_edit_form_fields', array($this, 'edit_color_field'));
+        
+        // カスタムタクソノミーにも対応
+        $taxonomies = get_taxonomies(array('public' => true), 'names');
+        foreach ($taxonomies as $taxonomy) {
+            if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
+                add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
+                add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
+                add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
+                add_action('create_' . $taxonomy, array($this, 'save_color_field'));
+            }
+        }
+        
+        // 保存処理
+        add_action('edited_category', array($this, 'save_color_field'));
+        add_action('create_category', array($this, 'save_color_field'));
+        add_action('edited_post_tag', array($this, 'save_color_field'));
+        add_action('create_post_tag', array($this, 'save_color_field'));
+        
+        // カラーピッカーの読み込み
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_color_picker'));
+        
+        // 一覧画面への色表示
+        add_filter('manage_edit-category_columns', array($this, 'add_color_column'));
+        add_filter('manage_category_custom_column', array($this, 'display_color_column'), 10, 3);
+        add_filter('manage_edit-post_tag_columns', array($this, 'add_color_column'));
+        add_filter('manage_post_tag_custom_column', array($this, 'display_color_column'), 10, 3);
+        
+        // カスタムタクソノミーの一覧画面にも対応
+        foreach ($taxonomies as $taxonomy) {
+            if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
+                add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
+                add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
+            }
+        }
+    }
+    
+    /**
+     * 新規追加画面のカラーフィールド
+     */
+    public function add_color_field($taxonomy) {
+        ?>
+        <div class="form-field">
+            <label for="uk_category_color"><?php _e('カテゴリーカラー', 'uk-category-color'); ?></label>
+            <input type="text" name="uk_category_color" id="uk_category_color" value="#000000" class="uk-color-picker-field" />
+            <p class="description"><?php _e('このカテゴリー/タームの表示色を選択してください。', 'uk-category-color'); ?></p>
+        </div>
+        <div class="form-field">
+            <label for="uk_category_link"><?php _e('リンク設定', 'uk-category-color'); ?></label>
+            <label>
+                <input type="checkbox" name="uk_category_link" id="uk_category_link" value="1" checked />
+                <?php _e('リンクありで表示する', 'uk-category-color'); ?>
+            </label>
+            <p class="description"><?php _e('ショートコードやウィジェットでの表示時にリンクを付けるかどうかを設定します。', 'uk-category-color'); ?></p>
+        </div>
+        <?php
+    }
+    
+    /**
+     * 編集画面のカラーフィールド
+     */
+    public function edit_color_field($term) {
+        $color = get_option('uk_term_color_' . $term->term_id, '#000000');
+        $use_link = get_option('uk_term_link_' . $term->term_id, '1');
+        ?>
+        <tr class="form-field">
+            <th scope="row" valign="top">
+                <label for="uk_category_color"><?php _e('カテゴリーカラー', 'uk-category-color'); ?></label>
+            </th>
+            <td>
+                <input type="text" name="uk_category_color" id="uk_category_color" value="<?php echo esc_attr($color); ?>" class="uk-color-picker-field" />
+                <p class="description"><?php _e('このカテゴリー/タームの表示色を選択してください。', 'uk-category-color'); ?></p>
+                <div class="uk-color-preview" style="width: 50px; height: 20px; border: 1px solid #ccc; margin-top: 5px; background-color: <?php echo esc_attr($color); ?>;"></div>
+            </td>
+        </tr>
+        <tr class="form-field">
+            <th scope="row" valign="top">
+                <label for="uk_category_link"><?php _e('リンク設定', 'uk-category-color'); ?></label>
+            </th>
+            <td>
+                <label>
+                    <input type="checkbox" name="uk_category_link" id="uk_category_link" value="1" <?php checked($use_link, '1'); ?> />
+                    <?php _e('リンクありで表示する', 'uk-category-color'); ?>
+                </label>
+                <p class="description"><?php _e('ショートコードやウィジェットでの表示時にリンクを付けるかどうかを設定します。', 'uk-category-color'); ?></p>
+            </td>
+        </tr>
+        <?php
+    }
+    
+    /**
+     * カラーフィールドの保存
+     */
+    public function save_color_field($term_id) {
+        if (isset($_POST['uk_category_color'])) {
+            $color = sanitize_hex_color($_POST['uk_category_color']);
+            if ($color) {
+                update_option('uk_term_color_' . $term_id, $color);
+            } else {
+                delete_option('uk_term_color_' . $term_id);
+            }
+        }
+        
+        if (isset($_POST['uk_category_link'])) {
+            update_option('uk_term_link_' . $term_id, '1');
+        } else {
+            update_option('uk_term_link_' . $term_id, '0');
+        }
+    }
+    
+    /**
+     * カラーピッカーのスクリプトを読み込み
+     */
+    public function enqueue_color_picker($hook_suffix) {
+        // タクソノミー編集画面でのみ読み込み
+        if (in_array($hook_suffix, array('edit-tags.php', 'term.php'))) {
+            wp_enqueue_style('wp-color-picker');
+            wp_enqueue_script('wp-color-picker');
+            
+            // カスタムスタイル
+            wp_add_inline_style('wp-color-picker', '
+                .uk-color-preview {
+                    display: inline-block;
+                    vertical-align: middle;
+                }
+            ');
+            
+            // カラーピッカーの初期化
+            wp_add_inline_script('wp-color-picker', '
+                jQuery(document).ready(function($) {
+                    $(".uk-color-picker-field").wpColorPicker({
+                        change: function(event, ui) {
+                            $(this).closest("td").find(".uk-color-preview").css("background-color", ui.color.toString());
+                        },
+                        clear: function() {
+                            $(this).closest("td").find(".uk-color-preview").css("background-color", "transparent");
+                        }
+                    });
+                });
+            ');
+        }
+    }
+    
+    /**
+     * 一覧画面にカラー列を追加
+     */
+    public function add_color_column($columns) {
+        $new_columns = array();
+        foreach ($columns as $key => $value) {
+            $new_columns[$key] = $value;
+            if ($key === 'name') {
+                $new_columns['uk_color'] = __('カラー', 'uk-category-color');
+            }
+        }
+        return $new_columns;
+    }
+    
+    /**
+     * カラー列の内容を表示
+     */
+    public function display_color_column($content, $column_name, $term_id) {
+        if ($column_name === 'uk_color') {
+            $color = get_option('uk_term_color_' . $term_id);
+            $use_link = get_option('uk_term_link_' . $term_id, '1');
+            
+            if ($color) {
+                $content = sprintf(
+                    '<div style="width: 30px; height: 20px; background-color: %s; border: 1px solid #ccc; display: inline-block; margin-right: 5px;"></div>%s<br><small>%s</small>',
+                    esc_attr($color),
+                    esc_html($color),
+                    $use_link === '1' ? __('リンクあり', 'uk-category-color') : __('リンクなし', 'uk-category-color')
+                );
+            } else {
+                $content = '<span style="color: #666;">' . __('未設定', 'uk-category-color') . '</span><br><small>' . 
+                          ($use_link === '1' ? __('リンクあり', 'uk-category-color') : __('リンクなし', 'uk-category-color')) . '</small>';
+            }
+        }
+        return $content;
+    }
+}
+
+// プラグインの初期化
+new UK_Category_Color();
+new UK_Category_Color_Admin_Fields();tion uk_get_colored_term_link($term_id, $text = null, $force_link = null) {
     $term = get_term($term_id);
     
     if (is_wp_error($term) || !$term) {
@@ -467,232 +654,5 @@ class UK_Category_Color {
     }
 }
 
-/**
- * カテゴリー・ターム編集画面にカラーフィールドを追加するクラス
- */
-class UK_Category_Color_Admin_Fields {
-    
-    public function __construct() {
-        // init フックで実行することで、すべてのタクソノミーが登録されてから処理する
-        add_action('init', array($this, 'init_taxonomy_hooks'), 20);
-        
-        // 基本的なタクソノミーは直接追加
-        add_action('category_add_form_fields', array($this, 'add_color_field'));
-        add_action('category_edit_form_fields', array($this, 'edit_color_field'));
-        add_action('post_tag_add_form_fields', array($this, 'add_color_field'));
-        add_action('post_tag_edit_form_fields', array($this, 'edit_color_field'));
-        
-        // 保存処理
-        add_action('edited_category', array($this, 'save_color_field'));
-        add_action('create_category', array($this, 'save_color_field'));
-        add_action('edited_post_tag', array($this, 'save_color_field'));
-        add_action('create_post_tag', array($this, 'save_color_field'));
-        
-        // カラーピッカーの読み込み
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_color_picker'));
-        
-        // 一覧画面への色表示
-        add_filter('manage_edit-category_columns', array($this, 'add_color_column'));
-        add_filter('manage_category_custom_column', array($this, 'display_color_column'), 10, 3);
-        add_filter('manage_edit-post_tag_columns', array($this, 'add_color_column'));
-        add_filter('manage_post_tag_custom_column', array($this, 'display_color_column'), 10, 3);
-    }
-    
-    /**
-     * init時にカスタムタクソノミーのフックを追加
-     */
-    public function init_taxonomy_hooks() {
-        // カスタムタクソノミーにも対応
-        $taxonomies = get_taxonomies(array('public' => true), 'names');
-        
-        // デバッグ情報をログに出力
-        error_log('UK Category Color - Available Taxonomies: ' . print_r($taxonomies, true));
-        
-        foreach ($taxonomies as $taxonomy) {
-            if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
-                error_log('UK Category Color - Adding hooks for taxonomy: ' . $taxonomy);
-                
-                add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
-                add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
-                add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
-                add_action('create_' . $taxonomy, array($this, 'save_color_field'));
-                
-                // 一覧画面にも対応
-                add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
-                add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
-            }
-        }
-        
-        // より後のタイミングでも確認
-        add_action('admin_init', array($this, 'late_taxonomy_hooks'));
-    }
-    
-    /**
-     * admin_init時にさらに遅いタイミングでタクソノミーフックを追加
-     */
-    public function late_taxonomy_hooks() {
-        $taxonomies = get_taxonomies(array('public' => true), 'names');
-        
-        foreach ($taxonomies as $taxonomy) {
-            if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
-                // 既に追加されていない場合のみ追加
-                if (!has_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'))) {
-                    add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
-                    add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
-                    add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
-                    add_action('create_' . $taxonomy, array($this, 'save_color_field'));
-                    
-                    add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
-                    add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
-                    
-                    error_log('UK Category Color - Late adding hooks for taxonomy: ' . $taxonomy);
-                }
-            }
-        }
-    }
-    
-    /**
-     * 新規追加画面のカラーフィールド
-     */
-    public function add_color_field($taxonomy) {
-        ?>
-        <div class="form-field">
-            <label for="uk_category_color"><?php _e('カテゴリーカラー', 'uk-category-color'); ?></label>
-            <input type="text" name="uk_category_color" id="uk_category_color" value="" class="uk-color-picker-field" />
-            <p class="description"><?php _e('このカテゴリー/タームの表示色を選択してください。', 'uk-category-color'); ?></p>
-            <div class="uk-color-preview" style="width: 50px; height: 20px; border: 1px solid #ccc; margin-top: 5px; background-color: transparent; text-align: center; line-height: 20px; font-size: 12px; color: #666;">なし</div>
-            <button type="button" class="button uk-reset-color-field" style="margin-top: 5px;"><?php _e('リセット', 'uk-category-color'); ?></button>
-        </div>
-        <?php
-    }
-    
-    /**
-     * 編集画面のカラーフィールド
-     */
-    public function edit_color_field($term) {
-        $color = get_option('uk_term_color_' . $term->term_id, '');
-        ?>
-        <tr class="form-field">
-            <th scope="row" valign="top">
-                <label for="uk_category_color"><?php _e('カテゴリーカラー', 'uk-category-color'); ?></label>
-            </th>
-            <td>
-                <input type="text" name="uk_category_color" id="uk_category_color" value="<?php echo esc_attr($color); ?>" class="uk-color-picker-field" />
-                <p class="description"><?php _e('このカテゴリー/タームの表示色を選択してください。', 'uk-category-color'); ?></p>
-                <?php if ($color): ?>
-                    <div class="uk-color-preview" style="width: 50px; height: 20px; border: 1px solid #ccc; margin-top: 5px; background-color: <?php echo esc_attr($color); ?>;"></div>
-                <?php else: ?>
-                    <div class="uk-color-preview" style="width: 50px; height: 20px; border: 1px solid #ccc; margin-top: 5px; background-color: transparent; text-align: center; line-height: 20px; font-size: 12px; color: #666;">なし</div>
-                <?php endif; ?>
-                <br>
-                <button type="button" class="button uk-reset-color-field" style="margin-top: 5px;"><?php _e('リセット', 'uk-category-color'); ?></button>
-            </td>
-        </tr>
-        <?php
-    }
-    
-    /**
-     * カラーフィールドの保存
-     */
-    public function save_color_field($term_id) {
-        if (isset($_POST['uk_category_color'])) {
-            $color = sanitize_hex_color($_POST['uk_category_color']);
-            if ($color) {
-                update_option('uk_term_color_' . $term_id, $color);
-            } else {
-                delete_option('uk_term_color_' . $term_id);
-            }
-        }
-    }
-    
-    /**
-     * カラーピッカーのスクリプトを読み込み
-     */
-    public function enqueue_color_picker($hook_suffix) {
-        // タクソノミー編集画面でのみ読み込み
-        if (in_array($hook_suffix, array('edit-tags.php', 'term.php'))) {
-            wp_enqueue_style('wp-color-picker');
-            wp_enqueue_script('wp-color-picker');
-            
-            // カスタムスタイル
-            wp_add_inline_style('wp-color-picker', '
-                .uk-color-preview {
-                    display: inline-block;
-                    vertical-align: middle;
-                }
-            ');
-            
-            // カラーピッカーの初期化
-            wp_add_inline_script('wp-color-picker', '
-                jQuery(document).ready(function($) {
-                    $(".uk-color-picker-field").wpColorPicker({
-                        change: function(event, ui) {
-                            var preview = $(this).closest("td, .form-field").find(".uk-color-preview");
-                            preview.css("background-color", ui.color.toString());
-                            preview.text("");
-                        },
-                        clear: function() {
-                            var preview = $(this).closest("td, .form-field").find(".uk-color-preview");
-                            preview.css("background-color", "transparent");
-                            preview.text("なし");
-                        }
-                    });
-                    
-                    // リセットボタンの処理
-                    $(".uk-reset-color-field").on("click", function(e) {
-                        e.preventDefault();
-                        var container = $(this).closest("td, .form-field");
-                        var colorInput = container.find(".uk-color-picker-field");
-                        var preview = container.find(".uk-color-preview");
-                        
-                        // カラーピッカーをクリア
-                        colorInput.val("");
-                        colorInput.wpColorPicker("color", "");
-                        
-                        // プレビューを更新
-                        preview.css("background-color", "transparent");
-                        preview.text("なし");
-                    });
-                });
-            ');
-        }
-    }
-    
-    /**
-     * 一覧画面にカラー列を追加
-     */
-    public function add_color_column($columns) {
-        $new_columns = array();
-        foreach ($columns as $key => $value) {
-            $new_columns[$key] = $value;
-            if ($key === 'name') {
-                $new_columns['uk_color'] = __('カラー', 'uk-category-color');
-            }
-        }
-        return $new_columns;
-    }
-    
-    /**
-     * カラー列の内容を表示
-     */
-    public function display_color_column($content, $column_name, $term_id) {
-        if ($column_name === 'uk_color') {
-            $color = get_option('uk_term_color_' . $term_id);
-            
-            if ($color) {
-                $content = sprintf(
-                    '<div style="width: 30px; height: 20px; background-color: %s; border: 1px solid #ccc; display: inline-block; margin-right: 5px;"></div>%s',
-                    esc_attr($color),
-                    esc_html($color)
-                );
-            } else {
-                $content = '<span style="color: #666;">' . __('なし', 'uk-category-color') . '</span>';
-            }
-        }
-        return $content;
-    }
-}
-
 // プラグインの初期化
 new UK_Category_Color();
-new UK_Category_Color_Admin_Fields();
