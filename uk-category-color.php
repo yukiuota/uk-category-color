@@ -3,8 +3,8 @@
  * Plugin Name: UK Category Color
  * Plugin URI: https://github.com/yukiuota/uk-category-color
  * Description: カテゴリーとタクソノミーのタームに個別の背景色を設定できるプラグインです。
- * Version: 1.1.0
- * Author: Y.U.
+ * Version: 1.2.0
+ * Author: Yuki Uota
  * Author URI: https://github.com/yukiuota
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,7 +35,7 @@ if (!defined('ABSPATH')) {
 }
 
 // プラグインの定数定義
-define('UK_CATEGORY_COLOR_VERSION', '1.1.0');
+define('UK_CATEGORY_COLOR_VERSION', '1.2.0');
 define('UK_CATEGORY_COLOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('UK_CATEGORY_COLOR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('UK_CATEGORY_COLOR_PLUGIN_FILE', __FILE__);
@@ -140,6 +140,7 @@ class UK_Category_Color {
             add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
             add_action('wp_ajax_save_term_colors', array($this, 'save_term_colors'));
             add_action('admin_notices', array($this, 'show_admin_notices'));
+            add_action('admin_init', array($this, 'handle_taxonomy_settings_save'));
         }
         
         // フロントエンドの初期化
@@ -217,13 +218,35 @@ class UK_Category_Color {
     }
     
     /**
+     * タクソノミー設定保存のハンドラー
+     */
+    public function handle_taxonomy_settings_save() {
+        if (isset($_POST['save_taxonomy_settings']) && 
+            isset($_GET['page']) && $_GET['page'] === 'uk-category-color') {
+            $this->save_taxonomy_settings();
+        }
+    }
+    
+    /**
      * 対応タクソノミーの取得
      */
     public function get_supported_taxonomies() {
         $taxonomies = get_taxonomies(array('public' => true), 'names');
-        // post_formatを除外
+        
+        // post_formatとpost_tagを除外
         unset($taxonomies['post_format']);
-        return $taxonomies;
+        unset($taxonomies['post_tag']);
+        
+        // 階層的なタクソノミーのみを対象にする
+        $hierarchical_taxonomies = array();
+        foreach ($taxonomies as $taxonomy) {
+            $taxonomy_obj = get_taxonomy($taxonomy);
+            if ($taxonomy_obj && $taxonomy_obj->hierarchical) {
+                $hierarchical_taxonomies[] = $taxonomy;
+            }
+        }
+        
+        return $hierarchical_taxonomies;
     }
     
     /**
@@ -237,6 +260,10 @@ class UK_Category_Color {
 
         if (isset($_GET['saved']) && $_GET['saved'] === '1') {
             echo '<div class="notice notice-success is-dismissible"><p>保存されました</p></div>';
+        }
+
+        if (isset($_GET['taxonomy_saved']) && $_GET['taxonomy_saved'] === '1') {
+            echo '<div class="notice notice-success is-dismissible"><p>タクソノミー設定を保存しました</p></div>';
         }
 
         if (isset($_GET['reset']) && $_GET['reset'] === '1') {
@@ -254,11 +281,51 @@ class UK_Category_Color {
             <h1>Category Color 設定</h1>
             <div id="uk-color-message" class="notice" style="display:none;"></div>
             
+            <!-- タクソノミー有効/無効設定 -->
+            <form id="uk-taxonomy-settings-form" method="post" style="margin-bottom: 30px;">
+                <?php wp_nonce_field('uk_category_color_taxonomy_nonce'); ?>
+                <h2>タクソノミー機能設定</h2>
+                <p>各タクソノミーでCategory Color機能を使用するかどうかを設定できます。</p>
+                
+                <div class="uk-taxonomy-settings">
+                    <?php foreach ($taxonomies as $taxonomy): ?>
+                        <?php
+                        $taxonomy_obj = get_taxonomy($taxonomy);
+                        $is_enabled = get_option('uk_taxonomy_enabled_' . $taxonomy, '1');
+                        ?>
+                        <div class="uk-taxonomy-setting-item">
+                            <label>
+                                <input 
+                                    type="checkbox" 
+                                    name="taxonomy_enabled[<?php echo esc_attr($taxonomy); ?>]" 
+                                    value="1"
+                                    <?php checked($is_enabled, '1'); ?>
+                                />
+                                <?php echo esc_html($taxonomy_obj->label); ?> (<?php echo esc_html($taxonomy); ?>)
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <input type="submit" class="button-primary" name="save_taxonomy_settings" value="タクソノミー設定を保存" />
+                </div>
+            </form>
+            
+            <hr style="margin: 30px 0;">
+            
+            <!-- カラー設定フォーム -->
             <form id="uk-category-color-form" class="uk-color-form" method="post">
                 <?php wp_nonce_field('uk_category_color_nonce'); ?>
                 
                 <?php foreach ($taxonomies as $taxonomy): ?>
                     <?php
+                    // タクソノミーが有効かチェック
+                    $is_taxonomy_enabled = get_option('uk_taxonomy_enabled_' . $taxonomy, '1');
+                    if ($is_taxonomy_enabled !== '1') {
+                        continue;
+                    }
+                    
                     $taxonomy_obj = get_taxonomy($taxonomy);
                     $terms = get_terms(array(
                         'taxonomy' => $taxonomy,
@@ -333,6 +400,39 @@ class UK_Category_Color {
     }
     
     /**
+     * タクソノミー設定の保存
+     */
+    public function save_taxonomy_settings() {
+        // nonceチェック
+        if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'uk_category_color_taxonomy_nonce')) {
+            wp_die('セキュリティチェックに失敗しました。');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('権限がありません。');
+        }
+        
+        $taxonomy_enabled = isset($_POST['taxonomy_enabled']) ? $_POST['taxonomy_enabled'] : array();
+        $taxonomies = $this->get_supported_taxonomies();
+        
+        // 各タクソノミーの設定を保存
+        foreach ($taxonomies as $taxonomy) {
+            if (isset($taxonomy_enabled[$taxonomy])) {
+                update_option('uk_taxonomy_enabled_' . $taxonomy, '1');
+            } else {
+                update_option('uk_taxonomy_enabled_' . $taxonomy, '0');
+            }
+        }
+        
+        // 保存完了のリダイレクト
+        wp_redirect(add_query_arg(array(
+            'page' => 'uk-category-color',
+            'taxonomy_saved' => '1'
+        ), admin_url('options-general.php')));
+        exit;
+    }
+    
+    /**
      * 設定の保存
      */
     public function save_term_colors() {
@@ -400,6 +500,12 @@ class UK_Category_Color {
             'force_link' => null // true, false, または null（設定に従う）
         ), $atts);
         
+        // タクソノミーが有効かチェック
+        $is_enabled = get_option('uk_taxonomy_enabled_' . $atts['taxonomy'], '1');
+        if ($is_enabled !== '1') {
+            return '';
+        }
+        
         $terms = get_terms(array(
             'taxonomy' => $atts['taxonomy'],
             'hide_empty' => $atts['hide_empty'] === 'true',
@@ -462,13 +568,22 @@ class UK_Category_Color {
         $supported_taxonomies = $this->get_supported_taxonomies();
         $taxonomies = array_intersect($taxonomies, $supported_taxonomies);
         
-        if (empty($taxonomies)) {
+        // 有効なタクソノミーのみをフィルタリング
+        $enabled_taxonomies = array();
+        foreach ($taxonomies as $taxonomy) {
+            $is_enabled = get_option('uk_taxonomy_enabled_' . $taxonomy, '1');
+            if ($is_enabled === '1') {
+                $enabled_taxonomies[] = $taxonomy;
+            }
+        }
+        
+        if (empty($enabled_taxonomies)) {
             return '';
         }
         
         $output = '<div class="uk-taxonomy-list">';
         
-        foreach ($taxonomies as $taxonomy) {
+        foreach ($enabled_taxonomies as $taxonomy) {
             $taxonomy_obj = get_taxonomy($taxonomy);
             if (!$taxonomy_obj) {
                 continue;
@@ -536,33 +651,15 @@ class UK_Category_Color_Admin_Fields {
         // init フックで実行することで、すべてのタクソノミーが登録されてから処理する
         add_action('init', array($this, 'init_taxonomy_hooks'), 20);
         
-        // 基本的なタクソノミーは直接追加
-        add_action('category_add_form_fields', array($this, 'add_color_field'));
-        add_action('category_edit_form_fields', array($this, 'edit_color_field'));
-        add_action('post_tag_add_form_fields', array($this, 'add_color_field'));
-        add_action('post_tag_edit_form_fields', array($this, 'edit_color_field'));
-        
-        // 保存処理
-        add_action('edited_category', array($this, 'save_color_field'));
-        add_action('create_category', array($this, 'save_color_field'));
-        add_action('edited_post_tag', array($this, 'save_color_field'));
-        add_action('create_post_tag', array($this, 'save_color_field'));
-        
         // カラーピッカーの読み込み
         add_action('admin_enqueue_scripts', array($this, 'enqueue_color_picker'));
-        
-        // 一覧画面への色表示
-        add_filter('manage_edit-category_columns', array($this, 'add_color_column'));
-        add_filter('manage_category_custom_column', array($this, 'display_color_column'), 10, 3);
-        add_filter('manage_edit-post_tag_columns', array($this, 'add_color_column'));
-        add_filter('manage_post_tag_custom_column', array($this, 'display_color_column'), 10, 3);
     }
     
     /**
      * init時にカスタムタクソノミーのフックを追加
      */
     public function init_taxonomy_hooks() {
-        // カスタムタクソノミーにも対応
+        // 対応タクソノミーを取得
         $taxonomies = get_taxonomies(array('public' => true), 'names');
         
         // デバッグ情報をログに出力（WP_DEBUGが有効な場合のみ）
@@ -571,20 +668,35 @@ class UK_Category_Color_Admin_Fields {
         }
         
         foreach ($taxonomies as $taxonomy) {
-            if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('UK Category Color - Adding hooks for taxonomy: ' . $taxonomy);
-                }
-                
-                add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
-                add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
-                add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
-                add_action('create_' . $taxonomy, array($this, 'save_color_field'));
-                
-                // 一覧画面にも対応
-                add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
-                add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
+            // post_formatとpost_tagは除外
+            if (in_array($taxonomy, array('post_format', 'post_tag'))) {
+                continue;
             }
+            
+            // 非階層的なタクソノミーは除外（タグ的なものを除外）
+            $taxonomy_obj = get_taxonomy($taxonomy);
+            if (!$taxonomy_obj || !$taxonomy_obj->hierarchical) {
+                continue;
+            }
+            
+            // タクソノミーが有効かチェック
+            $is_enabled = get_option('uk_taxonomy_enabled_' . $taxonomy, '1');
+            if ($is_enabled !== '1') {
+                continue;
+            }
+            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('UK Category Color - Adding hooks for taxonomy: ' . $taxonomy);
+            }
+            
+            add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
+            add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
+            add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
+            add_action('create_' . $taxonomy, array($this, 'save_color_field'));
+            
+            // 一覧画面にも対応
+            add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
+            add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
         }
         
         // より後のタイミングでも確認
@@ -598,20 +710,35 @@ class UK_Category_Color_Admin_Fields {
         $taxonomies = get_taxonomies(array('public' => true), 'names');
         
         foreach ($taxonomies as $taxonomy) {
-            if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
-                // 既に追加されていない場合のみ追加
-                if (!has_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'))) {
-                    add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
-                    add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
-                    add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
-                    add_action('create_' . $taxonomy, array($this, 'save_color_field'));
-                    
-                    add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
-                    add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
-                    
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log('UK Category Color - Late adding hooks for taxonomy: ' . $taxonomy);
-                    }
+            // post_formatとpost_tagは除外
+            if (in_array($taxonomy, array('post_format', 'post_tag'))) {
+                continue;
+            }
+            
+            // 非階層的なタクソノミーは除外（タグ的なものを除外）
+            $taxonomy_obj = get_taxonomy($taxonomy);
+            if (!$taxonomy_obj || !$taxonomy_obj->hierarchical) {
+                continue;
+            }
+            
+            // タクソノミーが有効かチェック
+            $is_enabled = get_option('uk_taxonomy_enabled_' . $taxonomy, '1');
+            if ($is_enabled !== '1') {
+                continue;
+            }
+            
+            // 既に追加されていない場合のみ追加
+            if (!has_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'))) {
+                add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
+                add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
+                add_action('edited_' . $taxonomy, array($this, 'save_color_field'));
+                add_action('create_' . $taxonomy, array($this, 'save_color_field'));
+                
+                add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
+                add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
+                
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('UK Category Color - Late adding hooks for taxonomy: ' . $taxonomy);
                 }
             }
         }

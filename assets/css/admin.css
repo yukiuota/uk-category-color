@@ -11,6 +11,44 @@
     margin-bottom: 20px;
 }
 
+/* タクソノミー設定セクション */
+.uk-taxonomy-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    background: #f9f9f9;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.uk-taxonomy-setting-item {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+}
+
+.uk-taxonomy-setting-item:hover {
+    border-color: #007cba;
+}
+
+.uk-taxonomy-setting-item label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+}
+
+.uk-taxonomy-setting-item input[type="checkbox"] {
+    margin: 0;
+    transform: scale(1.2);
+}
+
 /* タクソノミーセクション */
 .uk-taxonomy-section {
     background: #fff;
