@@ -1,22 +1,65 @@
 <?php
 /**
  * Plugin Name: UK Category Color
+ * Plugin URI: https://github.com/yukiuota/uk-category-color
  * Description: カテゴリーとタクソノミーのタームに個別の背景色を設定できるプラグインです。
  * Version: 1.1.0
  * Author: Y.U.
- * License: GPL v2
+ * Author URI: https://github.com/yukiuota
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: uk-category-color
+ * Domain Path: /languages
+ * Requires at least: 5.0
+ * Tested up to: 6.4
+ * Requires PHP: 7.4
+ * Network: false
+ *
+ * UK Category Color is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * any later version.
+ *
+ * UK Category Color is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with UK Category Color. If not, see https://www.gnu.org/licenses/gpl-2.0.html.
  */
 
-// セキュリティチェック
+// セキュリティチェック：直接アクセスを防止
 if (!defined('ABSPATH')) {
-    exit;
+    exit('Direct access forbidden.');
 }
 
 // プラグインの定数定義
 define('UK_CATEGORY_COLOR_VERSION', '1.1.0');
 define('UK_CATEGORY_COLOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('UK_CATEGORY_COLOR_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('UK_CATEGORY_COLOR_PLUGIN_FILE', __FILE__);
+define('UK_CATEGORY_COLOR_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+// プラグインのアクティベーション・デアクティベーションフック
+register_activation_hook(__FILE__, 'uk_category_color_activate');
+register_deactivation_hook(__FILE__, 'uk_category_color_deactivate');
+
+/**
+ * プラグインアクティベーション時の処理
+ */
+function uk_category_color_activate() {
+    // 必要なデータベーステーブルの作成や初期設定
+    // 現在は特に処理なし
+}
+
+/**
+ * プラグインデアクティベーション時の処理
+ */
+function uk_category_color_deactivate() {
+    // 一時的なデータのクリーンアップ
+    // 設定データは残しておく（アンインストール時に削除）
+}
 
 /**
  * 色付きタームリンクを生成する関数
@@ -71,8 +114,23 @@ function uk_get_term_color($term_id) {
  */
 class UK_Category_Color {
     
+    /**
+     * コンストラクタ
+     */
     public function __construct() {
         add_action('init', array($this, 'init'));
+        add_action('plugins_loaded', array($this, 'load_textdomain'));
+    }
+    
+    /**
+     * 国際化対応
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain(
+            'uk-category-color',
+            false,
+            dirname(UK_CATEGORY_COLOR_PLUGIN_BASENAME) . '/languages'
+        );
     }
     
     public function init() {
@@ -287,9 +345,11 @@ class UK_Category_Color {
         $term_colors = isset($_POST['term_colors']) ? $_POST['term_colors'] : array();
         $term_links = isset($_POST['term_links']) ? $_POST['term_links'] : array();
         
-        // デバッグ情報をログに出力
-        error_log('UK Category Color - Term Colors: ' . print_r($term_colors, true));
-        error_log('UK Category Color - Term Links: ' . print_r($term_links, true));
+        // デバッグ情報をログに出力（WP_DEBUGが有効な場合のみ）
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('UK Category Color - Term Colors: ' . print_r($term_colors, true));
+            error_log('UK Category Color - Term Links: ' . print_r($term_links, true));
+        }
         
         // すべてのタームのリンク設定を保存
         $taxonomies = $this->get_supported_taxonomies();
@@ -505,12 +565,16 @@ class UK_Category_Color_Admin_Fields {
         // カスタムタクソノミーにも対応
         $taxonomies = get_taxonomies(array('public' => true), 'names');
         
-        // デバッグ情報をログに出力
-        error_log('UK Category Color - Available Taxonomies: ' . print_r($taxonomies, true));
+        // デバッグ情報をログに出力（WP_DEBUGが有効な場合のみ）
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('UK Category Color - Available Taxonomies: ' . print_r($taxonomies, true));
+        }
         
         foreach ($taxonomies as $taxonomy) {
             if (!in_array($taxonomy, array('category', 'post_tag', 'post_format'))) {
-                error_log('UK Category Color - Adding hooks for taxonomy: ' . $taxonomy);
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('UK Category Color - Adding hooks for taxonomy: ' . $taxonomy);
+                }
                 
                 add_action($taxonomy . '_add_form_fields', array($this, 'add_color_field'));
                 add_action($taxonomy . '_edit_form_fields', array($this, 'edit_color_field'));
@@ -545,7 +609,9 @@ class UK_Category_Color_Admin_Fields {
                     add_filter('manage_edit-' . $taxonomy . '_columns', array($this, 'add_color_column'));
                     add_filter('manage_' . $taxonomy . '_custom_column', array($this, 'display_color_column'), 10, 3);
                     
-                    error_log('UK Category Color - Late adding hooks for taxonomy: ' . $taxonomy);
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('UK Category Color - Late adding hooks for taxonomy: ' . $taxonomy);
+                    }
                 }
             }
         }
@@ -595,12 +661,22 @@ class UK_Category_Color_Admin_Fields {
      * カラーフィールドの保存
      */
     public function save_color_field($term_id) {
+        // 権限チェック
+        if (!current_user_can('manage_categories')) {
+            return;
+        }
+        
+        // nonceチェック（フォーム送信時のみ）
+        if (isset($_POST['_wpnonce']) && !wp_verify_nonce($_POST['_wpnonce'], 'update-tag_' . $term_id)) {
+            return;
+        }
+        
         if (isset($_POST['uk_category_color'])) {
             $color = sanitize_hex_color($_POST['uk_category_color']);
             if ($color) {
-                update_option('uk_term_color_' . $term_id, $color);
+                update_option('uk_term_color_' . intval($term_id), $color);
             } else {
-                delete_option('uk_term_color_' . $term_id);
+                delete_option('uk_term_color_' . intval($term_id));
             }
         }
     }
@@ -693,6 +769,13 @@ class UK_Category_Color_Admin_Fields {
     }
 }
 
-// プラグインの初期化
-new UK_Category_Color();
-new UK_Category_Color_Admin_Fields();
+/**
+ * プラグインの初期化
+ */
+function uk_category_color_init() {
+    new UK_Category_Color();
+    new UK_Category_Color_Admin_Fields();
+}
+
+// プラグインの初期化を実行
+add_action('plugins_loaded', 'uk_category_color_init');
