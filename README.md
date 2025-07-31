@@ -27,9 +27,6 @@ WordPressのカテゴリーとカスタムタクソノミーのタームに個�
 3. WordPress管理画面の「プラグイン」メニューでプラグインを有効化
 4. 「設定」→「Category Color」から色設定を行う
 
-### WordPress Plugin Directory
-WordPress.org のプラグインディレクトリから直接インストール可能です。
-
 ## 使用方法
 
 ### 管理画面での直接編集
